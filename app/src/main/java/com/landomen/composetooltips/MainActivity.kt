@@ -4,12 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.MutatorMutex
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -81,6 +84,10 @@ private fun MainContent(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(32.dp))
 
         CustomRichTooltipClick()
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        ShowTwoTooltips()
     }
 }
 
@@ -88,7 +95,7 @@ private fun MainContent(modifier: Modifier = Modifier) {
 @Composable
 private fun PlainTooltipLongPress() {
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = { PlainTooltip { Text("This is a simple plain tooltip") } },
         state = rememberTooltipState()
     ) {
@@ -101,12 +108,16 @@ private fun PlainTooltipLongPress() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlainTooltipManual() {
-    val tooltipState = rememberTooltipState()
+    val tooltipState = rememberTooltipState(isPersistent = true, initialIsVisible = false)
     val scope = rememberCoroutineScope()
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         TooltipBox(
-            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-            tooltip = { PlainTooltip { Text("This is a simple plain tooltip") } },
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+            onDismissRequest = {
+                // This is called when the tooltip is dismissed
+                tooltipState.dismiss()
+            },
+            tooltip = { PlainTooltip(maxWidth = 100.dp) { Text("This is a simple plain tooltip") } },
             state = tooltipState
         ) {
             Button(onClick = {
@@ -126,7 +137,7 @@ private fun PlainTooltipWithCarrotManual() {
     val tooltipState = rememberTooltipState()
     val scope = rememberCoroutineScope()
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(16.dp),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(16.dp),
         tooltip = {
             PlainTooltip(
                 caretSize = DpSize(32.dp, 16.dp),
@@ -176,7 +187,7 @@ fun RichTooltipClick() {
     val tooltipState = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(8.dp),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(8.dp),
         tooltip = {
             RichTooltip(
                 caretSize = TooltipDefaults.caretSize,
@@ -214,7 +225,7 @@ fun CustomRichTooltipClick() {
     val tooltipState = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(8.dp),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(8.dp),
         tooltip = {
             RichTooltip(
                 caretSize = TooltipDefaults.caretSize,
@@ -230,7 +241,7 @@ fun CustomRichTooltipClick() {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Awesome!")
                     }
-                        },
+                },
                 action = {
                     Row {
                         TextButton(
@@ -266,6 +277,80 @@ fun CustomRichTooltipClick() {
             }
         }) {
             Text(text = "Show Custom Rich Tooltip on Click")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShowTwoTooltips() {
+    val tooltipState1 = rememberTooltipState(isPersistent = true)
+    val tooltipState2 = rememberTooltipState(
+        isPersistent = true,
+        mutatorMutex = MutatorMutex()
+    )
+    val scope = rememberCoroutineScope()
+
+    Button(onClick = {
+        scope.launch {
+            tooltipState1.show()
+        }
+        scope.launch {
+            tooltipState2.show()
+
+        }
+    }) {
+        Text(text = "Show Two Tooltips on Click")
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+            onDismissRequest = {
+                // This is called when the tooltip is dismissed
+                tooltipState1.dismiss()
+                tooltipState2.dismiss()
+            },
+            tooltip = { PlainTooltip(caretSize = TooltipDefaults.caretSize) { Text("Select option 1") } },
+            state = tooltipState1
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = false, onClick = {
+                    // ignore
+                })
+
+                Text("Option 1")
+            }
+        }
+
+        Spacer(Modifier.width(32.dp))
+
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+            onDismissRequest = {
+                // This is called when the tooltip is dismissed
+                tooltipState1.dismiss()
+                tooltipState2.dismiss()
+            },
+            tooltip = { PlainTooltip(caretSize = TooltipDefaults.caretSize) { Text("Select option 2") } },
+            state = tooltipState2
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = false, onClick = {
+                    // ignore
+                })
+
+                Text("Option 2")
+            }
         }
     }
 }
