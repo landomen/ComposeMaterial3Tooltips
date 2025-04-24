@@ -4,12 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.MutatorMutex
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.semantics.Role.Companion.RadioButton
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.landomen.composetooltips.ui.theme.ComposeTooltipsTheme
@@ -81,6 +85,10 @@ private fun MainContent(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(32.dp))
 
         CustomRichTooltipClick()
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        ShowTwoTooltips()
     }
 }
 
@@ -266,6 +274,70 @@ fun CustomRichTooltipClick() {
             }
         }) {
             Text(text = "Show Custom Rich Tooltip on Click")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShowTwoTooltips() {
+    val tooltipState1 = rememberTooltipState(isPersistent = true)
+    val tooltipState2 = rememberTooltipState(
+        isPersistent = true,
+        mutatorMutex = MutatorMutex()
+    )
+    val scope = rememberCoroutineScope()
+
+    Button(onClick = {
+        scope.launch {
+            tooltipState1.show()
+        }
+        scope.launch {
+            tooltipState2.show()
+
+        }
+    }) {
+        Text(text = "Show Two Tooltips on Click")
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+            tooltip = { PlainTooltip(caretSize = TooltipDefaults.caretSize) { Text("Select option 1") } },
+            state = tooltipState1
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = false, onClick = {
+                    // ignore
+                })
+
+                Text("Option 1")
+            }
+        }
+
+        Spacer(Modifier.width(32.dp))
+
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+            tooltip = { PlainTooltip(caretSize = TooltipDefaults.caretSize) { Text("Select option 2") } },
+            state = tooltipState2
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = false, onClick = {
+                    // ignore
+                })
+
+                Text("Option 2")
+            }
         }
     }
 }
