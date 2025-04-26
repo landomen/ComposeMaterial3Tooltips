@@ -8,3 +8,5 @@ There are two branches:
 
 
 ![custom_rich_tooltip](https://github.com/user-attachments/assets/1ec403df-196c-4d0c-86c1-3ba61c8b4c8e)
+
+You can find more details on Tooltips and how to use them in the following article: https://medium.com/@domen.lanisnik/tooltips-in-compose-material-3-14b49cbaf4dd
